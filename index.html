@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Home Sale Net Proceeds Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 1.25rem;
+      background: #f5f5f7;
+      color: #222;
+    }
+    .app {
+      max-width: 780px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 1.25rem 1.5rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.07);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 1.4rem;
+      text-align: center;
+    }
+    p.description {
+      font-size: 0.9rem;
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 1rem;
+      color: #555;
+    }
+    .section-title {
+      margin-top: 1.2rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-bottom: 1px solid #e5e5e5;
+      padding-bottom: 0.2rem;
+      margin-bottom: 0.5rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 0.6rem 0.8rem;
+      align-items: center;
+    }
+    @media (max-width: 640px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    label {
+      font-size: 0.9rem;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 0.4rem 0.5rem;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37,99,235,0.3);
+    }
+    .note {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: -0.3rem;
+      margin-bottom: 0.5rem;
+    }
+    .results {
+      margin-top: 1rem;
+      padding: 0.9rem;
+      border-radius: 10px;
+      background: #f3f4ff;
+      font-size: 0.9rem;
+    }
+    .results-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 0.12rem 0;
+    }
+    .results-row span.label {
+      color: #333;
+    }
+    .results-row span.value {
+      font-variant-numeric: tabular-nums;
+    }
+    .highlight {
+      font-weight: 600;
+      margin-top: 0.3rem;
+    }
+    .highlight.positive {
+      color: #15803d;
+    }
+    .highlight.negative {
+      color: #b91c1c;
+    }
+    .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.8rem;
+      flex-wrap: wrap;
+    }
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    button.primary {
+      background: #2563eb;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+    .footer-note {
+      font-size: 0.75rem;
+      color: #777;
+      margin-top: 0.75rem;
+      line-height: 1.3;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Home Sale Net Proceeds Calculator</h1>
+    <p class="description">
+      Estimate taxes, fees, and net profit from selling a property.
+      For a primary home, set depreciation to 0.
+    </p>
+
+    <div class="section-title">Inputs</div>
+    <div class="grid">
+      <label for="purchasePrice">Purchase price for home</label>
+      <input id="purchasePrice" type="number" value="177000" step="100">
+
+      <label for="improvements">Improvements</label>
+      <input id="improvements" type="number" value="19000" step="100">
+
+      <label for="depreciation">Depreciation taken (0 for primary)</label>
+      <input id="depreciation" type="number" value="0" step="100">
+
+      <label for="commissionPct">Commission rate (%)</label>
+      <input id="commissionPct" type="number" value="0" step="0.1">
+
+      <label for="closingCosts">Closing costs (+ / −)</label>
+      <input id="closingCosts" type="number" value="1500" step="100">
+
+      <label for="salePrice">Offer / sale price</label>
+      <input id="salePrice" type="number" value="220000" step="500">
+
+      <label for="fedCgPct">Federal capital gains rate (%)</label>
+      <input id="fedCgPct" type="number" value="15" step="0.1">
+
+      <label for="fedRecapPct">Federal recapture rate (%)</label>
+      <input id="fedRecapPct" type="number" value="25" step="0.1">
+
+      <div>
+        <label for="statePct">State tax rate (%)</label>
+        <div class="note">
+          Example: SC primary ~4%, SC non-primary ~6%.<br>
+          For other states, look up your state rate.
+        </div>
+      </div>
+      <input id="statePct" type="number" value="4" step="0.1">
+
+      <label for="targetNet">Target net profit (after tax &amp; fees)</label>
+      <input id="targetNet" type="number" value="43000" step="500">
+    </div>
+
+    <div class="btn-row">
+      <button class="primary" id="calcBtn">Calculate Net Proceeds</button>
+      <button class="secondary" id="solveBtn">Solve Sale Price for Target Net</button>
+    </div>
+
+    <div class="results" id="resultsBox" style="display:none">
+      <div class="results-row">
+        <span class="label">Adjusted basis (purchase + improvements − depreciation)</span>
+        <span class="value" id="adjBasisOut"></span>
+      </div>
+      <div class="results-row">
+        <span class="label">Total gain (sale − basis)</span>
+        <span class="value" id="gainOut"></span>
+      </div>
+      <div class="results-row">
+        <span class="label">Depreciation recapture base</span>
+        <span class="value" id="depBaseOut"></span>
+      </div>
+      <div class="results-row">
+        <span class="label">Taxable capital gain (gain − depreciation)</span>
+        <span class="value" id="taxableGainOut"></span>
+      </div>
+      <div class="results-row">
+        <span class="label">Federal recapture tax</span>
+        <span class="value" id="recapTaxOut"></span>
+      </div>
+      <div class="results-row">
+        <span class="label">Federal capital gains tax</span>
+        <span class="value" id="fedCgTaxOut"></span>
+      </div>
+      <div class="results-row">
+        <span class="label">State tax</span>
+        <span class="value" id="stateTaxOut"></span>
+      </div>
+      <div class="results-row">
+        <span class="label">Commission</span>
+        <span class="value" id="commissionOut"></span>
+      </div>
+      <div class="results-row">
+        <span class="label">Closing costs</span>
+        <span class="value" id="closingOut"></span>
+      </div>
+      <div class="results-row">
+        <span class="label">Total tax + fees</span>
+        <span class="value" id="totalFeesOut"></span>
+      </div>
+      <div class="results-row highlight">
+        <span class="label">Net proceeds after tax &amp; fees</span>
+        <span class="value" id="netProceedsOut"></span>
+      </div>
+      <div class="results-row highlight" id="diffRow">
+        <span class="label">Difference from target net</span>
+        <span class="value" id="diffOut"></span>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      This tool is for rough estimating only and is not tax advice. Actual tax
+      treatment can vary based on your full situation; talk with a tax professional
+      before making decisions.
+    </div>
+
+    <div class="footer-note">
+      Tip: On your phone, use “Add to Home Screen” from your browser’s share/menu
+      to save this as an app-like shortcut.
+    </div>
+  </div>
+
+  <script>
+    const fmtCurrency = (n) =>
+      isNaN(n) ? '—' :
+      new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n);
+
+    function getInputs() {
+      const purchasePrice = parseFloat(document.getElementById('purchasePrice').value) || 0;
+      const improvements  = parseFloat(document.getElementById('improvements').value)  || 0;
+      const depreciation  = parseFloat(document.getElementById('depreciation').value) || 0;
+      const commissionPct = (parseFloat(document.getElementById('commissionPct').value) || 0) / 100;
+      const closingCosts  = parseFloat(document.getElementById('closingCosts').value)  || 0;
+      const salePrice     = parseFloat(document.getElementById('salePrice').value)     || 0;
+      const fedCgRate     = (parseFloat(document.getElementById('fedCgPct').value)     || 0) / 100;
+      const fedRecapRate  = (parseFloat(document.getElementById('fedRecapPct').value)  || 0) / 100;
+      const stateRate     = (parseFloat(document.getElementById('statePct').value)     || 0) / 100;
+      const targetNet     = parseFloat(document.getElementById('targetNet').value)     || 0;
+
+      return {
+        purchasePrice, improvements, depreciation,
+        commissionPct, closingCosts, salePrice,
+        fedCgRate, fedRecapRate, stateRate, targetNet
+      };
+    }
+
+    function calculateForSalePrice(S) {
+      const {
+        purchasePrice, improvements, depreciation,
+        commissionPct, closingCosts,
+        fedCgRate, fedRecapRate, stateRate, targetNet
+      } = getInputs();
+
+      const basis = purchasePrice + improvements - depreciation;
+      const gain = S - basis;
+
+      const depBase = Math.max(depreciation, 0);
+      const taxableGain = Math.max(gain - depBase, 0);
+
+      const recapTax = depBase > 0 ? depBase * fedRecapRate : 0;
+      const fedCgTax = taxableGain * fedCgRate;
+      const stateTax = gain * stateRate;
+      const commission = S * commissionPct;
+
+      const totalFees = recapTax + fedCgTax + stateTax + commission + closingCosts;
+
+      const netProceeds = S - basis - totalFees;
+
+      return {
+        basis, gain, depBase, taxableGain,
+        recapTax, fedCgTax, stateTax, commission,
+        closingCosts, totalFees, netProceeds, targetNet, salePrice: S
+      };
+    }
+
+    function renderResults(res) {
+      const box = document.getElementById('resultsBox');
+      box.style.display = 'block';
+
+      document.getElementById('adjBasisOut').textContent     = fmtCurrency(res.basis);
+      document.getElementById('gainOut').textContent         = fmtCurrency(res.gain);
+      document.getElementById('depBaseOut').textContent      = fmtCurrency(res.depBase);
+      document.getElementById('taxableGainOut').textContent  = fmtCurrency(res.taxableGain);
+      document.getElementById('recapTaxOut').textContent     = fmtCurrency(res.recapTax);
+      document.getElementById('fedCgTaxOut').textContent     = fmtCurrency(res.fedCgTax);
+      document.getElementById('stateTaxOut').textContent     = fmtCurrency(res.stateTax);
+      document.getElementById('commissionOut').textContent   = fmtCurrency(res.commission);
+      document.getElementById('closingOut').textContent      = fmtCurrency(res.closingCosts);
+      document.getElementById('totalFeesOut').textContent    = fmtCurrency(res.totalFees);
+      document.getElementById('netProceedsOut').textContent  = fmtCurrency(res.netProceeds);
+
+      const diffRow = document.getElementById('diffRow');
+      const diffEl  = document.getElementById('diffOut');
+      if (res.targetNet) {
+        const diff = res.netProceeds - res.targetNet;
+        diffEl.textContent = fmtCurrency(diff);
+        diffRow.style.display = 'flex';
+        diffRow.classList.remove('positive', 'negative');
+        diffRow.classList.add(diff >= 0 ? 'positive' : 'negative');
+      } else {
+        diffEl.textContent = '—';
+        diffRow.style.display = 'none';
+      }
+    }
+
+    document.getElementById('calcBtn').addEventListener('click', () => {
+      const inputs = getInputs();
+      const res = calculateForSalePrice(inputs.salePrice);
+      renderResults(res);
+    });
+
+    document.getElementById('solveBtn').addEventListener('click', () => {
+      const {
+        purchasePrice, improvements, depreciation,
+        commissionPct, closingCosts,
+        fedCgRate, fedRecapRate, stateRate, targetNet
+      } = getInputs();
+
+      if (!targetNet) {
+        alert('Enter a target net profit first.');
+        return;
+      }
+
+      const basis = purchasePrice + improvements - depreciation;
+      const depBase = Math.max(depreciation, 0);
+      const recapTaxConst = depBase > 0 ? depBase * fedRecapRate : 0;
+
+      // NetProceeds(S) = S*(1 - c - f - s) + const
+      // const = -basis - closingCosts - recapTaxConst + (basis + depBase)*fedCgRate + basis*stateRate
+      const c = commissionPct;
+      const f = fedCgRate;
+      const s = stateRate;
+
+      const denom = 1 - c - f - s;
+      if (Math.abs(denom) < 1e-6) {
+        alert('Combined commission + tax rates are too high to solve algebraically. Adjust rates.');
+        return;
+      }
+
+      const constTerm =
+        -basis - closingCosts - recapTaxConst +
+        (basis + depBase) * f +
+        basis * s;
+
+      const S = (targetNet - constTerm) / denom;
+
+      if (S <= 0) {
+        alert('The inputs result in a non-sensical sale price. Check numbers.');
+        return;
+      }
+
+      document.getElementById('salePrice').value = S.toFixed(0);
+
+      const res = calculateForSalePrice(S);
+      renderResults(res);
+    });
+  </script>
+</body>
+</html>
