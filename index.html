@@ -136,14 +136,14 @@
 <body>
   <div class="app">
     <h1>Home Sale Net Proceeds Calculator</h1>
-    <p class="description">
-      Estimate taxes, fees, and net profit from selling a property.
-      For a primary home, set depreciation to 0.
-    </p>
+<p class="description">
+  Quickly estimate your net proceeds after commission, closing costs, and taxes.
+  For a primary home, set depreciation to 0 and adjust state rates as needed.
+</p>
 
     <div class="section-title">Inputs</div>
     <div class="grid">
-<div class="grid">
+
   <label for="purchasePrice">Purchase price for home</label>
   <input id="purchasePrice" type="number" step="100">
 
@@ -183,6 +183,7 @@
     <div class="btn-row">
       <button class="primary" id="calcBtn">Calculate Net Proceeds</button>
       <button class="secondary" id="solveBtn">Solve Sale Price for Target Net</button>
+      <button class="secondary" id="resetBtn">Clear All</button>
     </div>
 
     <div class="results" id="resultsBox" style="display:none">
@@ -345,7 +346,7 @@
       } = getInputs();
 
       if (!targetNet) {
-        alert('Enter a target net profit first.');
+        alert('Please enter a target net profit before solving for a sale price.');
         return;
       }
 
@@ -373,15 +374,37 @@
       const S = (targetNet - constTerm) / denom;
 
       if (S <= 0) {
-        alert('The inputs result in a non-sensical sale price. Check numbers.');
+        alert('These inputs lead to an unrealistic sale price. Please double-check the numbers.');
         return;
-      }
+}
+
 
       document.getElementById('salePrice').value = S.toFixed(0);
 
       const res = calculateForSalePrice(S);
       renderResults(res);
     });
+    document.getElementById('resetBtn').addEventListener('click', () => {
+  const ids = [
+    'purchasePrice', 'improvements', 'depreciation',
+    'commissionPct', 'closingCosts', 'salePrice',
+    'fedCgPct', 'fedRecapPct', 'statePct', 'targetNet'
+  ];
+
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    // restore defaults for some fields if you want:
+    if (id === 'fedCgPct') el.value = 15;
+    else if (id === 'fedRecapPct') el.value = 25;
+    else el.value = '';
+  });
+
+  // hide results
+  document.getElementById('resultsBox').style.display = 'none';
+});
+
   </script>
 </body>
 </html>
